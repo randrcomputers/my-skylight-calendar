@@ -6,7 +6,8 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
+from datetime import timedelta
 
 from .const import (
     CONF_BIRTHDAYS_CALENDAR,
@@ -16,6 +17,7 @@ from .const import (
     CONF_WEATHER,
     DOMAIN,
 )
+from .preflight import probe_week_planner_plus
 
 
 async def async_setup_entry(
@@ -62,6 +64,14 @@ class SkylightSetupSensor(SensorEntity):
                 _changed,
             )
         )
+        # Re-check Plus periodically (HACS install may happen after wizard)
+        self.async_on_remove(
+            async_track_time_interval(
+                self.hass,
+                lambda _now: self.async_schedule_update_ha_state(True),
+                timedelta(minutes=5),
+            )
+        )
 
     def _watched_entities(self) -> list[str]:
         data = {**self._entry.data, **self._entry.options}
@@ -72,7 +82,12 @@ class SkylightSetupSensor(SensorEntity):
             slot = m.get("slot")
             if slot:
                 ents.append(f"switch.skylight_filter_{slot}")
-        for key in (CONF_FAMILY_CALENDAR, CONF_HOLIDAYS_CALENDAR, CONF_BIRTHDAYS_CALENDAR, CONF_WEATHER):
+        for key in (
+            CONF_FAMILY_CALENDAR,
+            CONF_HOLIDAYS_CALENDAR,
+            CONF_BIRTHDAYS_CALENDAR,
+            CONF_WEATHER,
+        ):
             if data.get(key):
                 ents.append(data[key])
         return ents
@@ -92,7 +107,7 @@ class SkylightSetupSensor(SensorEntity):
             else:
                 ok.append(cal)
 
-        for key, label in (
+        for key, _label in (
             (CONF_FAMILY_CALENDAR, "family"),
             (CONF_HOLIDAYS_CALENDAR, "holidays"),
             (CONF_BIRTHDAYS_CALENDAR, "birthdays"),
@@ -111,16 +126,34 @@ class SkylightSetupSensor(SensorEntity):
         else:
             ok.append("select.skylight_view")
 
-        # Frontend hint (cannot fully detect cards; expose as advice)
+        plus = await probe_week_planner_plus(self.hass)
+        if not plus.get("resource_ok"):
+            if not plus.get("file_found"):
+                missing.append("frontend:week-planner-card-plus")
+            else:
+                missing.append("lovelace-resource:week-planner-card-plus")
+        else:
+            ok.append("frontend:week-planner-card-plus")
+
         advice = [
-            "Install HACS frontend: week-planner-card-plus, bubble-card, config-template-card, card-mod, better-moment-card",
-            "Hard-refresh browser after HACS installs (Ctrl+F5)",
+            "Required frontend: Week Planner Card Plus only (HACS → Frontend)",
+            "Hard-refresh browser after install (Ctrl+F5)",
+            "Use the planner legend to show/hide calendars",
+            "Tap empty day or event to Add/Edit",
+            "Stuck? Call service skylight_calendar.fix_setup",
         ]
+        if not plus.get("resource_ok"):
+            advice.insert(0, plus.get("message") or "Install Week Planner Card Plus")
+            advice.insert(1, f"One-click HACS: {plus.get('my_hacs')}")
 
         self._attr_native_value = "ready" if not missing else "needs_attention"
         self._attr_extra_state_attributes = {
             "ok": ok,
             "missing": missing,
             "advice": advice,
-            "dashboard_file": f"/config/skylight_calendar/dashboard_generated.yaml",
+            "plus_file_found": plus.get("file_found"),
+            "plus_resource_ok": plus.get("resource_ok"),
+            "plus_url": plus.get("resource_url") or plus.get("url"),
+            "dashboard_file": "/config/skylight_calendar/dashboard_generated.yaml",
+            "fix_service": f"{DOMAIN}.fix_setup",
         }

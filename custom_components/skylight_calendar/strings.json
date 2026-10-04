@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Skylight Family Calendar",
-        "description": "Visual setup wizard. This creates filter toggles, a view selector, optional Local Calendars, and a Family Calendar dashboard using **Week Planner Card Plus**.\n\nHow many family members (personal calendars) do you want?",
+        "description": "**Prerequisite check**\n\n{plus_status}\n\nThis wizard creates optional Local Calendars and a **7-day Family Calendar** dashboard using **{plus}** only (no Bubble / Config Template / card-mod).\n\nHow many family members?",
         "data": {
           "member_count": "Number of people"
         }
@@ -31,7 +31,7 @@
       },
       "options": {
         "title": "Finish",
-        "description": "The wizard will create show/hide switches, install a Lovelace dashboard (when possible), and write `/config/skylight_calendar/dashboard_generated.yaml` as a backup.\n\nAlso install via HACS (Frontend): **Week Planner Card Plus**, Bubble Card, Config Template Card, card-mod, Better Moment Card — then hard-refresh the browser.",
+        "description": "Creates calendars (only if missing), installs a 7-day Family Calendar dashboard, and tries to register Week Planner Card Plus.\n\n**Only frontend required:** Week Planner Card Plus (HACS → Frontend). Then hard-refresh (Ctrl+F5).\n\nIf anything looks wrong later: Developer Tools → Services → `skylight_calendar.fix_setup`.",
         "data": {
           "create_local_calendars": "Create any missing Local Calendars",
           "install_dashboard": "Try to install Lovelace dashboard automatically",
@@ -47,7 +47,7 @@
     "step": {
       "init": {
         "title": "Skylight options",
-        "description": "Update shared entities or re-run calendar/dashboard provisioning on Save (reload).",
+        "description": "Update shared entities or re-run calendar/dashboard provisioning on Save (reload). Stuck? Call `skylight_calendar.fix_setup`.",
         "data": {
           "family_calendar": "Family / shared calendar",
           "holidays_calendar": "Holidays calendar",
@@ -58,6 +58,25 @@
           "dashboard_path": "Dashboard URL path"
         }
       }
+    }
+  },
+  "issues": {
+    "missing_week_planner_plus": {
+      "title": "Week Planner Card Plus is not installed",
+      "description": "The Family Calendar dashboard needs **Week Planner Card Plus** (HACS → Frontend).\n\n1. HACS → Frontend → Download **Week Planner Card Plus** (`randrcomputers/week-planner-card-plus`)\n2. Restart Home Assistant\n3. Hard-refresh the browser (Ctrl+F5)\n4. Call service `skylight_calendar.fix_setup`\n\nThen check `sensor.skylight_setup_status` — it should become **ready**."
+    },
+    "plus_resource_not_registered": {
+      "title": "Week Planner Card Plus needs a Lovelace resource",
+      "description": "The Plus JavaScript file is on disk, but Lovelace has no module resource for it.\n\nTap **Fix this issue** to register it automatically, or add it manually under Settings → Dashboards → ⋮ → Resources.\n\nThen hard-refresh (Ctrl+F5)."
+    }
+  },
+  "repairs": {
+    "confirm": {
+      "title": "Register Week Planner Card Plus",
+      "description": "This will add the Plus card as a Lovelace JavaScript module resource so the Family Calendar dashboard can load."
+    },
+    "abort": {
+      "still_missing": "Could not register the resource. Install Week Planner Card Plus via HACS (Frontend), restart HA, then try again or call skylight_calendar.fix_setup."
     }
   }
 }

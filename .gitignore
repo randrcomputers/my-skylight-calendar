@@ -1,1 +1,4 @@
-custom_dashboard.yaml
+﻿custom_dashboard.yaml
+__pycache__/
+*.pyc
+.DS_Store

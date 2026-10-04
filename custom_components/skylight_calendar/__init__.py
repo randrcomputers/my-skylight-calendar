@@ -17,16 +17,17 @@ from .const import (
     CONF_HOLIDAYS_CALENDAR,
     CONF_INSTALL_DASHBOARD,
     CONF_MEMBERS,
-    CONF_WEATHER,
     DOMAIN,
     PLATFORMS,
 )
 from .dashboard_install import install_lovelace_dashboard, write_dashboard_files
 from .local_calendars import ensure_local_calendar
+from .preflight import ensure_week_planner_plus_resource, notify_setup_complete
 
 _LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+CONF_WELCOME_SENT = "welcome_sent"
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
@@ -44,7 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await async_setup_services(hass)
     hass.data[DOMAIN][entry.entry_id] = {"data": {**entry.data, **entry.options}}
 
-    await _async_provision(hass, entry)
+    await _async_provision(hass, entry, force_notify=False)
 
     await hass.config_entries.async_forward_entry_setups(
         entry, [Platform(p) for p in PLATFORMS]
@@ -67,7 +68,20 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
-async def _async_provision(hass: HomeAssistant, entry: ConfigEntry) -> None:
+async def async_fix_setup(hass: HomeAssistant) -> dict:
+    """Re-run Plus preflight + dashboard install + notification (one-click fix)."""
+    entries = hass.config_entries.async_entries(DOMAIN)
+    if not entries:
+        return {"ok": False, "message": "Integration not configured"}
+    entry = entries[0]
+    await _async_provision(hass, entry, force_notify=True)
+    data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
+    return {"ok": True, "message": "fix_setup complete", "data": data.get("last_plus")}
+
+
+async def _async_provision(
+    hass: HomeAssistant, entry: ConfigEntry, *, force_notify: bool
+) -> None:
     """Create missing calendars + install/update dashboard."""
     data = {**entry.data, **entry.options}
     create_local = data.get(CONF_CREATE_LOCAL, True)
@@ -93,7 +107,7 @@ async def _async_provision(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
         for conf_key, default_name in (
             (CONF_FAMILY_CALENDAR, "Family"),
-            (CONF_HOLIDAYS_CALENDAR, None),  # holidays usually from Holiday integration
+            (CONF_HOLIDAYS_CALENDAR, None),
             (CONF_BIRTHDAYS_CALENDAR, "Birthdays"),
         ):
             if conf_key == CONF_HOLIDAYS_CALENDAR:
@@ -102,7 +116,6 @@ async def _async_provision(hass: HomeAssistant, entry: ConfigEntry) -> None:
             if ent and hass.states.get(ent) is not None:
                 continue
             if ent is None and conf_key == CONF_FAMILY_CALENDAR:
-                # Create Family if user left blank but wanted locals
                 entity_id = await ensure_local_calendar(hass, default_name)
                 if entity_id:
                     data[conf_key] = entity_id
@@ -117,14 +130,33 @@ async def _async_provision(hass: HomeAssistant, entry: ConfigEntry) -> None:
             new_data[CONF_FAMILY_CALENDAR] = data[CONF_FAMILY_CALENDAR]
         hass.config_entries.async_update_entry(entry, data=new_data)
 
-    # Always write generated dashboard files
     try:
         path = await write_dashboard_files(hass, data)
         _LOGGER.info("Wrote Skylight dashboard file to %s", path)
     except Exception as err:  # noqa: BLE001
         _LOGGER.warning("Could not write dashboard file: %s", err)
 
+    plus_info = await ensure_week_planner_plus_resource(hass)
+    hass.data[DOMAIN][entry.entry_id]["last_plus"] = plus_info
+    _LOGGER.info("Plus preflight: %s", plus_info.get("message"))
+
+    url = None
     if install_dash:
         url = await install_lovelace_dashboard(hass, data)
         if url:
             _LOGGER.info("Skylight dashboard available at /%s", url)
+
+    # One welcome notification (or when user calls fix_setup). Ongoing Plus
+    # problems surface as Settings → System → Repairs + sensor.needs_attention.
+    welcome_sent = bool(entry.data.get(CONF_WELCOME_SENT))
+    should_notify = force_notify or not welcome_sent
+    if should_notify:
+        await notify_setup_complete(
+            hass,
+            dashboard_path=url or data.get(CONF_DASHBOARD_PATH),
+            plus_info=plus_info,
+        )
+        if not welcome_sent:
+            hass.config_entries.async_update_entry(
+                entry, data={**entry.data, CONF_WELCOME_SENT: True}
+            )

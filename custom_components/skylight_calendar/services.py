@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from .const import DOMAIN
 from .dashboard_install import install_lovelace_dashboard, write_dashboard_files
 from .local_calendars import ensure_local_calendar
+from .preflight import ensure_week_planner_plus_resource, notify_setup_complete
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         if not data:
             _LOGGER.error("No skylight_calendar config entry")
             return
+        await ensure_week_planner_plus_resource(hass)
         await write_dashboard_files(hass, data)
         url = await install_lovelace_dashboard(hass, data)
         _LOGGER.info("Dashboard install finished path=%s", url)
@@ -56,7 +58,15 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             )
             await hass.config_entries.async_reload(entry.entry_id)
 
+    async def fix_setup(_call: ServiceCall) -> None:
+        """One-click: register Plus, reinstall dashboard, show checklist."""
+        from . import async_fix_setup
+
+        result = await async_fix_setup(hass)
+        _LOGGER.info("fix_setup: %s", result)
+
     hass.services.async_register(DOMAIN, "install_dashboard", install_dashboard)
     hass.services.async_register(
         DOMAIN, "create_missing_calendars", create_missing
     )
+    hass.services.async_register(DOMAIN, "fix_setup", fix_setup)

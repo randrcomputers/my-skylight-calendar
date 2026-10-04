@@ -24,6 +24,7 @@ from .const import (
     DEFAULT_DASHBOARD_PATH,
     DOMAIN,
 )
+from .preflight import PLUS_MY_HACS, probe_week_planner_plus
 
 
 def _slot(name: str, index: int) -> str:
@@ -48,6 +49,22 @@ class SkylightCalendarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if self._async_current_entries():
             return self.async_abort(reason="single_instance_allowed")
 
+        plus = await probe_week_planner_plus(self.hass)
+        if plus.get("resource_ok"):
+            plus_status = f"✅ {plus.get('message')}"
+        elif plus.get("file_found"):
+            plus_status = (
+                f"⚠️ Plus JS is on disk but not registered yet — "
+                f"the wizard will try to fix that.\n{plus.get('message')}"
+            )
+        else:
+            plus_status = (
+                "⚠️ Week Planner Card Plus is **not** installed yet.\n"
+                "Install it first (HACS → Frontend), or continue and fix later "
+                "with `skylight_calendar.fix_setup`.\n"
+                f"[Open in HACS]({PLUS_MY_HACS})"
+            )
+
         if user_input is not None:
             self._member_count = int(user_input["member_count"])
             self._index = 0
@@ -70,6 +87,7 @@ class SkylightCalendarConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ),
             description_placeholders={
                 "plus": "Week Planner Card Plus",
+                "plus_status": plus_status,
             },
         )
 

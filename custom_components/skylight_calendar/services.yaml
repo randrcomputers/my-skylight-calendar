@@ -1,3 +1,8 @@
+fix_setup:
+  name: Fix setup (one-click)
+  description: Register Week Planner Card Plus if possible, reinstall the Family Calendar dashboard, and show the next-steps notification. Use this when the calendar card is missing or setup looks stuck.
+  fields: {}
+
 install_dashboard:
   name: Install / refresh dashboard
   description: Regenerate and install the Family Calendar Lovelace dashboard from the current wizard settings.
