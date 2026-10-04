@@ -17,7 +17,7 @@ from .const import (
     CONF_WEATHER,
     DOMAIN,
 )
-from .preflight import probe_week_planner_plus
+from .preflight import probe_look_cards, probe_week_planner_plus
 
 
 async def async_setup_entry(
@@ -135,16 +135,24 @@ class SkylightSetupSensor(SensorEntity):
         else:
             ok.append("frontend:week-planner-card-plus")
 
+        look = await probe_look_cards(self.hass)
+        for name in look.get("missing") or []:
+            missing.append(f"frontend:{name}")
+        for name in look.get("found") or []:
+            ok.append(f"frontend:{name}")
+
         advice = [
-            "Required frontend: Week Planner Card Plus only (HACS → Frontend)",
+            "Original look needs: Plus + Bubble + Config Template + card-mod + Better Moment + Weather Card",
             "Hard-refresh browser after install (Ctrl+F5)",
-            "Use the planner legend to show/hide calendars",
+            "Tap a person pill to show/hide that calendar",
             "Tap empty day or event to Add/Edit",
             "Stuck? Call service skylight_calendar.fix_setup",
         ]
         if not plus.get("resource_ok"):
             advice.insert(0, plus.get("message") or "Install Week Planner Card Plus")
             advice.insert(1, f"One-click HACS: {plus.get('my_hacs')}")
+        if look.get("missing"):
+            advice.insert(0, "Install HACS Frontend: " + ", ".join(look["missing"]))
 
         self._attr_native_value = "ready" if not missing else "needs_attention"
         self._attr_extra_state_attributes = {

@@ -31,7 +31,22 @@ Hard-refresh the browser after install (**Ctrl+F5**).
 3. Walk the wizard (it checks whether Plus is installed)  
 4. Open the **Family Calendar** dashboard (or follow the notification)
 
-That’s it. The generated dashboard uses **only** Week Planner Card Plus + built-in HA cards (no Bubble Card / Config Template Card / Browser Mod required).
+That's it. The generated dashboard matches the **original Skylight look** (big clock, weather, person pills, Add Event, view selector, week grid).
+
+**Frontend cards (HACS → Frontend)** so it actually looks like the screenshots:
+
+1. Week Planner Card Plus (required)
+2. Bubble Card (person pills + Add Event)
+3. Config Template Card (Today / Week / Month)
+4. card-mod (rounded tiles / colors)
+5. Better Moment Card (clock)
+6. Weather Card (optional, if you pick a weather entity)
+
+Copy `themes/skylight.yaml` into your HA themes if you want the same fonts/colors.
+
+Hard-refresh (**Ctrl+F5**) after installing cards. Missing cards show up on `sensor.skylight_setup_status` and in **Settings → System → Repairs**.
+
+Chore/todo checkboxes (dishwasher, laundry, …) are **not** part of the shared template — those stay on your own dashboard.
 
 ### Stuck? One-click fix
 
@@ -53,9 +68,9 @@ Also check:
 | Prerequisite check | Detects Plus on disk / in Lovelace resources |
 | Pick people / calendars | Entity selectors — or leave blank to create Local Calendars |
 | Never recreate existing calendars | Skips if entity or same-name calendar already exists |
-| Filter UI | Planner **legend** tap to show/hide (built into Plus) |
-| Week grid | Fixed **7-day** layout (fixes the common “vertical days” mess) |
-| Add / Edit | Built into Plus — tap empty day or an event |
+| Filter UI | Color **person pills** (Bubble) — tap to show/hide |
+| Week grid | Plus week/month via **Select View** (Config Template) |
+| Add / Edit | Tap empty day or event; **Add Event** opens the family calendar |
 | Lovelace resource | Auto-registers the Plus JS when HACS installed it |
 | HA Repairs | Creates a Repair if Plus is missing or unregistered |
 | Status | `sensor.skylight_setup_status` → `ready` / `needs_attention` |

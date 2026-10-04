@@ -18,11 +18,59 @@ _LOGGER = logging.getLogger(__name__)
 
 ISSUE_MISSING_PLUS = "missing_week_planner_plus"
 ISSUE_PLUS_RESOURCE = "plus_resource_not_registered"
+ISSUE_MISSING_LOOK_CARDS = "missing_skylight_look_cards"
 
 PLUS_REPO = "https://github.com/randrcomputers/week-planner-card-plus"
 PLUS_MY_HACS = (
     "https://my.home-assistant.io/redirect/hacs_repository/"
     "?owner=randrcomputers&repository=week-planner-card-plus&category=plugin"
+)
+
+# Extra HACS frontend cards for the original Skylight chrome (pills, clock, filters).
+LOOK_CARDS: tuple[dict[str, Any], ...] = (
+    {
+        "id": "bubble-card",
+        "name": "Bubble Card",
+        "paths": (
+            "www/community/bubble-card/bubble-card.js",
+            "www/community/Bubble-Card/bubble-card.js",
+        ),
+        "url_hint": "bubble-card",
+    },
+    {
+        "id": "config-template-card",
+        "name": "Config Template Card",
+        "paths": (
+            "www/community/config-template-card/config-template-card.js",
+        ),
+        "url_hint": "config-template-card",
+    },
+    {
+        "id": "card-mod",
+        "name": "card-mod",
+        "paths": (
+            "www/community/lovelace-card-mod/card-mod.js",
+            "www/community/card-mod/card-mod.js",
+        ),
+        "url_hint": "card-mod",
+    },
+    {
+        "id": "better-moment-card",
+        "name": "Better Moment Card",
+        "paths": (
+            "www/community/better-moment-card/better-moment-card.js",
+        ),
+        "url_hint": "better-moment-card",
+    },
+    {
+        "id": "weather-card",
+        "name": "Weather Card",
+        "paths": (
+            "www/community/weather-card/weather-card.js",
+            "www/community/lovelace-weather-card/weather-card.js",
+        ),
+        "url_hint": "weather-card",
+    },
 )
 
 # Common HACS / manual paths for the Plus card module
@@ -108,17 +156,62 @@ async def probe_week_planner_plus(hass: HomeAssistant) -> dict[str, Any]:
     return result
 
 
+async def _lovelace_resource_urls(hass: HomeAssistant) -> list[str]:
+    urls: list[str] = []
+    try:
+        lovelace = hass.data.get("lovelace")
+        resources = getattr(lovelace, "resources", None) if lovelace else None
+        items: list[Any] = []
+        if resources is not None:
+            if hasattr(resources, "async_items"):
+                items = list(resources.async_items())
+            elif hasattr(resources, "data"):
+                items = list(getattr(resources, "data", {}).values())
+        for item in items:
+            if isinstance(item, dict):
+                urls.append(str(item.get("url") or ""))
+            else:
+                urls.append(str(getattr(item, "url", "") or ""))
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.debug("Could not scan Lovelace resources: %s", err)
+    return urls
+
+
+async def probe_look_cards(hass: HomeAssistant) -> dict[str, Any]:
+    """Which original-look frontend cards are present on disk or in resources."""
+    urls = await _lovelace_resource_urls(hass)
+    joined = " ".join(urls).lower()
+    missing: list[str] = []
+    found: list[str] = []
+    for card in LOOK_CARDS:
+        on_disk = False
+        for rel in card["paths"]:
+            path = Path(hass.config.path(rel))
+            if await hass.async_add_executor_job(path.is_file):
+                on_disk = True
+                break
+        in_res = card["url_hint"] in joined
+        if on_disk or in_res:
+            found.append(card["name"])
+        else:
+            missing.append(card["name"])
+    return {"found": found, "missing": missing}
+
+
 async def ensure_week_planner_plus_resource(hass: HomeAssistant) -> dict[str, Any]:
     """Probe Plus and register the Lovelace module resource when possible."""
     result = await probe_week_planner_plus(hass)
 
-    if result["resource_ok"]:
+    async def _finish() -> dict[str, Any]:
         await sync_plus_issues(hass, result)
+        look = await probe_look_cards(hass)
+        result["look_found"] = look["found"]
+        result["look_missing"] = look["missing"]
+        await sync_look_issues(hass, look)
         return result
 
-    if not result["file_found"]:
-        await sync_plus_issues(hass, result)
-        return result
+    if result["resource_ok"] or not result["file_found"]:
+        return await _finish()
 
     url = result["url"]
     try:
@@ -130,8 +223,7 @@ async def ensure_week_planner_plus_resource(hass: HomeAssistant) -> dict[str, An
                 "Add it manually: Settings → Dashboards → ⋮ → Resources → Add Resource "
                 f"→ URL `{url}` → type JavaScript Module."
             )
-            await sync_plus_issues(hass, result)
-            return result
+            return await _finish()
 
         if hasattr(resources, "async_create_item"):
             await resources.async_create_item({"res_type": "module", "url": url})
@@ -148,8 +240,7 @@ async def ensure_week_planner_plus_resource(hass: HomeAssistant) -> dict[str, An
         _LOGGER.warning("Could not register Plus resource: %s", err)
         result["message"] = f"Could not auto-register resource: {err}"
 
-    await sync_plus_issues(hass, result)
-    return result
+    return await _finish()
 
 
 async def sync_plus_issues(hass: HomeAssistant, plus_info: dict[str, Any]) -> None:
@@ -184,6 +275,24 @@ async def sync_plus_issues(hass: HomeAssistant, plus_info: dict[str, Any]) -> No
     )
 
 
+async def sync_look_issues(hass: HomeAssistant, look: dict[str, Any]) -> None:
+    """Repair if original Skylight chrome cards are missing."""
+    ir.async_delete_issue(hass, DOMAIN, ISSUE_MISSING_LOOK_CARDS)
+    missing = look.get("missing") or []
+    if not missing:
+        return
+    ir.async_create_issue(
+        hass,
+        DOMAIN,
+        ISSUE_MISSING_LOOK_CARDS,
+        is_fixable=False,
+        severity=ir.IssueSeverity.WARNING,
+        translation_key="missing_skylight_look_cards",
+        translation_placeholders={"cards": ", ".join(missing)},
+        learn_more_url="https://github.com/randrcomputers/my-skylight-calendar",
+    )
+
+
 async def notify_setup_complete(
     hass: HomeAssistant,
     *,
@@ -205,6 +314,12 @@ async def notify_setup_complete(
         if plus_ok
         else f"⚠️ {plus_info.get('message')}\n  One-click HACS: {PLUS_MY_HACS}"
     )
+    look_missing = plus_info.get("look_missing") or []
+    look_line = (
+        "✅ Original-look cards found (Bubble, Config Template, card-mod, Better Moment, Weather)"
+        if not look_missing
+        else "⚠️ Install via HACS → Frontend: " + ", ".join(look_missing)
+    )
 
     message = (
         "Skylight Family Calendar setup finished.\n\n"
@@ -213,8 +328,8 @@ async def notify_setup_complete(
         f"2. {dash_line}\n"
         "3. Check `sensor.skylight_setup_status` — should be **ready**\n\n"
         f"**Week Planner Card Plus:**\n{plus_line}\n\n"
-        "Only **Week Planner Card Plus** is required for the generated dashboard. "
-        "Tap the calendar legend to show/hide people; tap a day/event to add/edit.\n\n"
+        f"**Original Skylight look:**\n{look_line}\n\n"
+        "Tap a person pill to show/hide. Tap an empty day or event to Add/Edit.\n\n"
         f"One-click fix: Developer Tools → Services → `{DOMAIN}.fix_setup`"
     )
     async_create_notification(

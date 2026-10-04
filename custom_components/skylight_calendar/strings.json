@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Skylight Family Calendar",
-        "description": "**Prerequisite check**\n\n{plus_status}\n\nThis wizard creates optional Local Calendars and a **7-day Family Calendar** dashboard using **{plus}** only (no Bubble / Config Template / card-mod).\n\nHow many family members?",
+        "description": "**Prerequisite check**\n\n{plus_status}\n\nThis wizard creates optional Local Calendars and a **Family Calendar** dashboard in the **original Skylight look** (person pills, clock, Add Event, view selector) using **{plus}** plus Bubble / Config Template / card-mod / Better Moment.\n\nHow many family members?",
         "data": {
           "member_count": "Number of people"
         }
@@ -31,7 +31,7 @@
       },
       "options": {
         "title": "Finish",
-        "description": "Creates calendars (only if missing), installs a 7-day Family Calendar dashboard, and tries to register Week Planner Card Plus.\n\n**Only frontend required:** Week Planner Card Plus (HACS → Frontend). Then hard-refresh (Ctrl+F5).\n\nIf anything looks wrong later: Developer Tools → Services → `skylight_calendar.fix_setup`.",
+        "description": "Creates calendars (only if missing) and installs the original Skylight-look Family Calendar dashboard.\n\n**Frontend (HACS):** Week Planner Card Plus, Bubble Card, Config Template Card, card-mod, Better Moment Card, Weather Card. Then hard-refresh (Ctrl+F5).\n\nIf anything looks wrong later: Developer Tools → Services → `skylight_calendar.fix_setup`.",
         "data": {
           "create_local_calendars": "Create any missing Local Calendars",
           "install_dashboard": "Try to install Lovelace dashboard automatically",
@@ -68,6 +68,10 @@
     "plus_resource_not_registered": {
       "title": "Week Planner Card Plus needs a Lovelace resource",
       "description": "The Plus JavaScript file is on disk, but Lovelace has no module resource for it.\n\nTap **Fix this issue** to register it automatically, or add it manually under Settings → Dashboards → ⋮ → Resources.\n\nThen hard-refresh (Ctrl+F5)."
+    },
+    "missing_skylight_look_cards": {
+      "title": "Skylight look cards are missing",
+      "description": "The Family Calendar dashboard uses the original Skylight chrome. Install these via **HACS → Frontend**, then hard-refresh (Ctrl+F5):\n\n{cards}\n\nAlso install the **Skylight** theme from this repo (`themes/skylight.yaml`) if the colors look off."
     }
   },
   "repairs": {
