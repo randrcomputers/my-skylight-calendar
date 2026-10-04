@@ -1,0 +1,9 @@
+install_dashboard:
+  name: Install / refresh dashboard
+  description: Regenerate and install the Family Calendar Lovelace dashboard from the current wizard settings.
+  fields: {}
+
+create_missing_calendars:
+  name: Create missing Local Calendars
+  description: Create Local Calendar entries for any people still missing a calendar entity.
+  fields: {}

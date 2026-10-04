@@ -267,7 +267,7 @@ views:
                   return "month";
                 })()
             card:
-              type: custom:week-planner-card
+              type: custom:week-planner-card-plus
               calendars:
                 # --- MAP CALENDARS HERE ---
                 - entity: calendar.calendar1 # <--- UPDATE THIS ENTITY
@@ -301,7 +301,7 @@ views:
               days: ${ DAYS }
               startingDay: ${ STARTDAY }
               showNavigation: true
-              showWeekDayText: false # <--- Requires week-planner-card v1.13.0 or higher
+              showWeekDayText: false # <--- Requires week-planner-card-plus (or week-planner-card v1.13.0+)
               startingDayOffset: 0
               hideWeekend: false
               noCardBackground: false

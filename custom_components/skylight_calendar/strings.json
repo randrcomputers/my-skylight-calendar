@@ -1,0 +1,63 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Skylight Family Calendar",
+        "description": "Visual setup wizard. This creates filter toggles, a view selector, optional Local Calendars, and a Family Calendar dashboard using **Week Planner Card Plus**.\n\nHow many family members (personal calendars) do you want?",
+        "data": {
+          "member_count": "Number of people"
+        }
+      },
+      "member": {
+        "title": "Person {n} of {total}",
+        "description": "Pick an existing calendar, or leave it empty and enable **Create Local Calendar if missing** so the wizard creates one named after this person.",
+        "data": {
+          "name": "Display name",
+          "calendar": "Calendar entity (optional)",
+          "person": "Person entity (optional)",
+          "color": "Color (hex, e.g. #E07A5F)",
+          "create_local_if_missing": "Create Local Calendar if missing"
+        }
+      },
+      "shared": {
+        "title": "Shared calendars & weather",
+        "description": "Optional shared calendars. Holidays usually come from Settings → Devices & services → Holiday.",
+        "data": {
+          "family_calendar": "Family / shared calendar",
+          "holidays_calendar": "Holidays calendar",
+          "birthdays_calendar": "Birthdays calendar",
+          "weather": "Weather entity"
+        }
+      },
+      "options": {
+        "title": "Finish",
+        "description": "The wizard will create show/hide switches, install a Lovelace dashboard (when possible), and write `/config/skylight_calendar/dashboard_generated.yaml` as a backup.\n\nAlso install via HACS (Frontend): **Week Planner Card Plus**, Bubble Card, Config Template Card, card-mod, Better Moment Card — then hard-refresh the browser.",
+        "data": {
+          "create_local_calendars": "Create any missing Local Calendars",
+          "install_dashboard": "Try to install Lovelace dashboard automatically",
+          "dashboard_path": "Dashboard URL path"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Skylight Family Calendar is already configured. Use Configure on the existing entry."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Skylight options",
+        "description": "Update shared entities or re-run calendar/dashboard provisioning on Save (reload).",
+        "data": {
+          "family_calendar": "Family / shared calendar",
+          "holidays_calendar": "Holidays calendar",
+          "birthdays_calendar": "Birthdays calendar",
+          "weather": "Weather entity",
+          "create_local_calendars": "Create any missing Local Calendars",
+          "install_dashboard": "Reinstall Lovelace dashboard on save",
+          "dashboard_path": "Dashboard URL path"
+        }
+      }
+    }
+  }
+}

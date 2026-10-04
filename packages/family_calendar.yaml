@@ -1,12 +1,17 @@
 # ==============================================================================
 #  FAMILY CALENDAR BACKEND PACKAGE
 # ==============================================================================
+#  Used with Week Planner Card Plus + the visual Setup dashboard:
+#    setup/setup-dashboard.yaml
+#
 #  INSTRUCTIONS:
 #  1. Place this file in your /config/packages/ folder.
-#  2. Ensure your configuration.yaml has: 
+#  2. Ensure your configuration.yaml has:
 #     homeassistant:
 #       packages: !include_dir_named packages
-#  3. RESTART Home Assistant.
+#  3. Search "# <--- UPDATE THIS ENTITY" if your calendar IDs differ.
+#  4. RESTART Home Assistant.
+#  5. Confirm helpers show ✅ on the Setup dashboard.
 # ==============================================================================
 
 # 1. HELPERS (The Variables)

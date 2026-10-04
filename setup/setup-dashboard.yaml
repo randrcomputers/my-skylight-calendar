@@ -1,0 +1,132 @@
+# ==============================================================================
+#  SKYLIGHT SETUP — Visual checklist dashboard
+# ==============================================================================
+#  Paste this as a NEW dashboard (Raw configuration editor), or add as a view.
+#  Use it while installing. When everything is green, switch to dashboard.yaml.
+#
+#  Tip: name this dashboard "Skylight Setup" and keep it in the sidebar until
+#  your Family Calendar dashboard works.
+# ==============================================================================
+
+views:
+  - title: Setup
+    path: setup
+    icon: mdi:clipboard-check-outline
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: markdown
+            content: |
+              # DIY Skylight — Setup checklist
+              Work top → bottom. Refresh this page after each restart.
+              When every row below is ✅, open your **Family Calendar** dashboard.
+
+              **This fork uses [Week Planner Card Plus](https://github.com/randrcomputers/week-planner-card-plus)** (not the original week-planner-card).
+
+          - type: markdown
+            title: 1 · HACS frontend cards
+            content: |
+              Install under **HACS → Frontend**, then **hard-refresh** (Ctrl+F5).
+
+              - [ ] **Week Planner Card Plus** — [repo](https://github.com/randrcomputers/week-planner-card-plus) (custom repository if needed)
+              - [ ] Bubble Card
+              - [ ] Config Template Card
+              - [ ] card-mod
+              - [ ] Better Moment Card
+              - [ ] Weather Card
+              - [ ] Layout Card
+              - [ ] Button Card
+              - [ ] **Browser Mod** via HACS
+              - [ ] **Browser Mod** also under Settings → Devices & services → **Add Integration**
+
+              > **#1 failure:** Browser Mod files in HACS but integration never added → popups stay blank.
+
+          - type: markdown
+            title: 2 · Packages line in configuration.yaml
+            content: |
+              Under `homeassistant:` you need:
+
+              ```yaml
+              homeassistant:
+                packages: !include_dir_named packages
+              ```
+
+              Then copy `packages/family_calendar.yaml` into `/config/packages/` and **restart Home Assistant**.
+
+          - type: markdown
+            title: 3 · Helpers from the package
+            content: |
+              After restart, these should exist:
+
+              | Helper | Status |
+              |--------|--------|
+              | `input_select.calendar_view` | {% if states.input_select.calendar_view %}✅{% else %}❌ missing — package not loaded{% endif %} |
+              | `input_select.calendar_select` | {% if states.input_select.calendar_select %}✅{% else %}❌{% endif %} |
+              | `input_text.calendar1_calendar_filter` | {% if states.input_text.calendar1_calendar_filter %}✅{% else %}❌{% endif %} |
+              | `input_text.calendar_event_title` | {% if states.input_text.calendar_event_title %}✅{% else %}❌{% endif %} |
+              | `input_boolean.calendar_all_day_event` | {% if states.input_boolean.calendar_all_day_event %}✅{% else %}❌{% endif %} |
+              | `script.add_google_calendar_event` | {% if states.script.add_google_calendar_event %}✅{% else %}❌{% endif %} |
+
+              If many are ❌: packages path wrong, YAML indent error, or HA not restarted.
+
+          - type: markdown
+            title: 4 · Calendar entities (map these!)
+            content: |
+              Create **Local Calendar** or **Google Calendar** entries.
+              Default names (easiest — no YAML edits):
+
+              | Expected entity | Status | What to do if ❌ |
+              |-----------------|--------|------------------|
+              | `calendar.calendar1` | {% if states.calendar.calendar1 %}✅{% else %}❌{% endif %} | Add Local Calendar named **calendar1** |
+              | `calendar.calendar2` | {% if states.calendar.calendar2 %}✅{% else %}❌{% endif %} | Add **calendar2** |
+              | `calendar.calendar3` | {% if states.calendar.calendar3 %}✅{% else %}❌{% endif %} | Add **calendar3** |
+              | `calendar.calendar4` | {% if states.calendar.calendar4 %}✅{% else %}❌{% endif %} | Add **calendar4** |
+              | `calendar.family` | {% if states.calendar.family %}✅{% else %}❌{% endif %} | Add **Family** (entity often `calendar.family`) |
+              | `calendar.birthdays` | {% if states.calendar.birthdays %}✅{% else %}⚠️ optional{% endif %} | Optional |
+              | `calendar.holidays` | {% if states.calendar.holidays %}✅{% else %}⚠️ add Holiday integration{% endif %} | Settings → Add Integration → **Holiday** |
+
+              **Using different entity IDs?** Search `dashboard.yaml` and `packages/family_calendar.yaml` for `# <--- UPDATE THIS ENTITY` and replace every match.
+
+          - type: markdown
+            title: 5 · People & weather
+            content: |
+              | Entity | Status |
+              |--------|--------|
+              | `person.calendar1` | {% if states.person.calendar1 %}✅{% else %}⚠️ update person.* in dashboard.yaml{% endif %} |
+              | `person.calendar2` | {% if states.person.calendar2 %}✅{% else %}⚠️{% endif %} |
+              | `person.calendar3` | {% if states.person.calendar3 %}✅{% else %}⚠️{% endif %} |
+              | `person.calendar4` | {% if states.person.calendar4 %}✅{% else %}⚠️{% endif %} |
+              | `weather.home` | {% if states.weather.home %}✅{% else %}❌ set your weather.* entity in dashboard.yaml{% endif %} |
+
+          - type: markdown
+            title: 6 · Theme & background (optional look)
+            content: |
+              1. `configuration.yaml` → under `frontend:`:
+                 ```yaml
+                 frontend:
+                   themes: !include_dir_merge_named themes
+                 ```
+              2. Copy `themes/skylight.yaml` → `/config/themes/`
+              3. Copy `calbackgrd.png` → `/config/www/calbackgrd.png` (used as `/local/calbackgrd.png`)
+              4. Restart → Profile → Theme → **Skylight**
+
+              Background file present at `/local/calbackgrd.png` cannot be checked from here — open that URL in a new tab after upload.
+
+          - type: markdown
+            title: 7 · Finish
+            content: |
+              1. Create a **new dashboard** → Raw configuration editor → paste `dashboard.yaml`
+              2. Confirm the planner card type is `custom:week-planner-card-plus`
+              3. Hard-refresh the kiosk browser
+              4. Tap a person filter chip, switch Week/Month, try **Add** / click an event to **Edit** (Plus built-in dialog)
+
+              Still stuck? Typical fixes:
+              - Red custom-card error → HACS card missing or cache (Ctrl+F5)
+              - Empty calendar → wrong `calendar.*` entity IDs
+              - Filters do nothing → package helpers missing
+              - Add popup blank → Browser Mod not added as integration
+
+              Upstream project: [mohesles/my-skylight-calendar](https://github.com/mohesles/my-skylight-calendar)  
+              Maintained fork cards: [week-planner-card-plus](https://github.com/randrcomputers/week-planner-card-plus) · [ics-calendar-tools](https://github.com/randrcomputers/ics-calendar-tools)
