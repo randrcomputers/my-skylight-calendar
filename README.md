@@ -5,48 +5,48 @@
 [![hacs_badge](https://img.shields.io/badge/Open%20Plus%20in%20HACS-my-41BDF5.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=randrcomputers&repository=week-planner-card-plus&category=plugin)
 [![hacs_badge](https://img.shields.io/badge/Open%20this%20integration%20in%20HACS-my-41BDF5.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=randrcomputers&repository=my-skylight-calendar&category=integration)
 
-Fork of [mohesles/my-skylight-calendar](https://github.com/mohesles/my-skylight-calendar) with a **foolproof setup wizard** and **[Week Planner Card Plus](https://github.com/randrcomputers/week-planner-card-plus)**.
+Fork of [mohesles/my-skylight-calendar](https://github.com/mohesles/my-skylight-calendar) with a **setup wizard** and **[Week Planner Card Plus](https://github.com/randrcomputers/week-planner-card-plus)**. The wizard builds a dashboard that matches the **original Skylight look**.
 
 ![Skylight calendar](assets/main_view.jpeg)
 
 ---
 
-## Foolproof install (2 downloads)
+## Install
 
-### 1. Week Planner Card Plus (HACS → Frontend)
+### 1. Frontend cards (HACS → Frontend)
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=randrcomputers&repository=week-planner-card-plus&category=plugin)
+Install these so the dashboard looks like the screenshots (person pills, clock, week grid, etc.):
 
-Or: HACS → Frontend → Custom repositories →  
-`https://github.com/randrcomputers/week-planner-card-plus` → **Plugin** → Download.
+| Card | Why |
+|------|-----|
+| **[Week Planner Card Plus](https://github.com/randrcomputers/week-planner-card-plus)** | Calendar grid (required) |
+| **Bubble Card** | Person pills + Add Event |
+| **Config Template Card** | Today / Week / Month view |
+| **card-mod** | Rounded tiles / colors |
+| **Better Moment Card** | Big clock |
+| **Weather Card** | Weather panel (if you use weather) |
+
+[![Open Plus in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=randrcomputers&repository=week-planner-card-plus&category=plugin)
+
+Plus custom repo (if needed): `https://github.com/randrcomputers/week-planner-card-plus` → category **Plugin**.
+
+Optional: copy [`themes/skylight.yaml`](themes/skylight.yaml) into your HA themes for the same fonts/colors.
 
 Hard-refresh the browser after install (**Ctrl+F5**).
 
 ### 2. This integration (HACS → Integrations)
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=randrcomputers&repository=my-skylight-calendar&category=integration)
+[![Open this integration in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=randrcomputers&repository=my-skylight-calendar&category=integration)
 
-1. Download **Skylight Family Calendar** → restart HA  
-2. **Settings → Devices & services → Add Integration → Skylight Family Calendar**  
-3. Walk the wizard (it checks whether Plus is installed)  
-4. Open the **Family Calendar** dashboard (or follow the notification)
+1. Custom repositories → `https://github.com/randrcomputers/my-skylight-calendar` → **Integration**
+2. Download **Skylight Family Calendar** → restart HA
+3. **Settings → Devices & services → Add Integration → Skylight Family Calendar**
+4. Walk the wizard (people, calendars, weather)
+5. Open the **Family Calendar** dashboard (or follow the notification)
 
-That's it. The generated dashboard matches the **original Skylight look** (big clock, weather, person pills, Add Event, view selector, week grid).
+Missing cards show on `sensor.skylight_setup_status` and in **Settings → System → Repairs**.
 
-**Frontend cards (HACS → Frontend)** so it actually looks like the screenshots:
-
-1. Week Planner Card Plus (required)
-2. Bubble Card (person pills + Add Event)
-3. Config Template Card (Today / Week / Month)
-4. card-mod (rounded tiles / colors)
-5. Better Moment Card (clock)
-6. Weather Card (optional, if you pick a weather entity)
-
-Copy `themes/skylight.yaml` into your HA themes if you want the same fonts/colors.
-
-Hard-refresh (**Ctrl+F5**) after installing cards. Missing cards show up on `sensor.skylight_setup_status` and in **Settings → System → Repairs**.
-
-Chore/todo checkboxes (dishwasher, laundry, …) are **not** part of the shared template — those stay on your own dashboard.
+Chore/todo checkboxes (dishwasher, laundry, …) are **not** part of the shared template — add those yourself if you want them.
 
 ### Stuck? One-click fix
 
@@ -57,7 +57,8 @@ That re-registers Plus, reinstalls the dashboard, and shows the checklist again.
 Also check:
 
 - `sensor.skylight_setup_status` → should be `ready` (attributes list anything `missing`)
-- **Settings → System → Repairs** — Plus problems show up there with steps
+- **Settings → System → Repairs**
+- HACS frontend cards above are installed + hard-refresh (**Ctrl+F5**)
 
 ---
 
@@ -72,14 +73,14 @@ Also check:
 | Week grid | Plus week/month via **Select View** (Config Template) |
 | Add / Edit | Tap empty day or event; **Add Event** opens the family calendar |
 | Lovelace resource | Auto-registers the Plus JS when HACS installed it |
-| HA Repairs | Creates a Repair if Plus is missing or unregistered |
+| HA Repairs | Warns if Plus or look cards (Bubble, etc.) are missing |
 | Status | `sensor.skylight_setup_status` → `ready` / `needs_attention` |
 | Backup YAML | `/config/skylight_calendar/dashboard_generated.yaml` |
 
 Services:
 
-- `skylight_calendar.fix_setup` ← start here if something’s wrong  
-- `skylight_calendar.install_dashboard`  
+- `skylight_calendar.fix_setup` ← start here if something’s wrong
+- `skylight_calendar.install_dashboard`
 - `skylight_calendar.create_missing_calendars`
 
 ---
@@ -89,7 +90,7 @@ Services:
 1. Call `skylight_calendar.fix_setup`
 2. Hard-refresh (**Ctrl+F5**)
 3. Open `sensor.skylight_setup_status` → attribute `missing`
-4. Confirm Plus: HACS → Frontend → Week Planner Card Plus
+4. Confirm HACS frontend cards (Plus, Bubble, Config Template, card-mod, Better Moment, Weather)
 5. Settings → Dashboards → ⋮ → Resources → URL containing `week-planner-card-plus`
 6. Check **Settings → System → Repairs**
 
@@ -97,18 +98,19 @@ Services:
 
 ## Manual / classic YAML (optional)
 
-Still available if you want the original package style:
+Still available if you prefer the package-style setup:
 
-- [`setup/setup-dashboard.yaml`](setup/setup-dashboard.yaml) checklist  
-- [`packages/family_calendar.yaml`](packages/family_calendar.yaml)  
-- [`dashboard.yaml`](dashboard.yaml)  
+- [`setup/setup-dashboard.yaml`](setup/setup-dashboard.yaml) checklist
+- [`packages/family_calendar.yaml`](packages/family_calendar.yaml)
+- [`dashboard.yaml`](dashboard.yaml)
 
 ---
 
 ## Credits
 
-- **[@mohesles](https://github.com/mohesles)** — original DIY Skylight project  
-- **[@FamousWolf](https://github.com/FamousWolf)** — Week Planner Card  
+- **[@mohesles](https://github.com/mohesles)** — original DIY Skylight project
+- **[@randrcomputers](https://github.com/randrcomputers)** — this fork (wizard, Week Planner Card Plus, install helpers)
+- **[@FamousWolf](https://github.com/FamousWolf)** — Week Planner Card
 - **[Week Planner Card Plus](https://github.com/randrcomputers/week-planner-card-plus)** · **[ICS Calendar Tools](https://github.com/randrcomputers/ics-calendar-tools)**
 
 Community: [DIY Family Calendar (Skylight)](https://community.home-assistant.io/t/diy-family-calendar-skylight/844830)
